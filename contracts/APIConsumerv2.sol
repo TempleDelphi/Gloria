@@ -2,12 +2,16 @@
 pragma solidity ^0.8.7;
 
 import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
+import "@chainlink/contracts/src/v0.8/ConfirmedOwner.sol";
+import "@chainlink/contracts/src/v0.8/interfaces/LinkTokenInterface.sol";
+
+error APIConsumer__NothingToWithdraw();
 
 /**
  * @title The APIConsumer contract
  * @notice An API Consumer contract that makes GET requests to obtain 24h trading volume of ETH in USD
  */
-contract APIConsumer is ChainlinkClient {
+contract APIConsumer is ConfirmedOwner, ChainlinkClient {
   using Chainlink for Chainlink.Request;
 
   uint256 public volume;
@@ -16,19 +20,31 @@ contract APIConsumer is ChainlinkClient {
   uint256 private immutable fee;
 
   event DataFullfilled(uint256 volume);
-  /**
-   * Network: Rinkeby
-   * Chainlink token id on rinkeby: 0x01BE23585060835E02B77ef475b0Cc51aA1e0709
-   * Oracle: 0xc57B33452b4F7BB189bB5AfaE9cc4aBa1f7a4FD8
-   * Job ID: 6b88e0402e5d415eb946e528b8e0c7ba 
-   * Fee: 0.1 LINK
+
+/**
+   * @notice Executes once when a contract is created to initialize state variables
+   *
+   * @param _oracle - address of the specific Chainlink node that a contract makes an API call from
+   * @param _jobId - specific job for :_oracle: to run; each job is unique and returns different types of data
+   * @param _fee - node operator price per API call / data request
+   * @param _link - LINK token address on the corresponding network
    */
-  constructor() {
-    setChainlinkToken(0x01BE23585060835E02B77ef475b0Cc51aA1e0709);
-    oracle = 0xc57B33452b4F7BB189bB5AfaE9cc4aBa1f7a4FD8;
-    jobId = "6b88e0402e5d415eb946e528b8e0c7ba";
-    fee = 0.1 * 10 ** 18; // (Varies by network and job)
+  constructor(
+    address _oracle,
+    bytes32 _jobId,
+    uint256 _fee,
+    address _link
+  ) ConfirmedOwner(msg.sender) {
+    if (_link == address(0)) {
+      setPublicChainlinkToken();
+    } else {
+      setChainlinkToken(_link);
+    }
+    oracle = _oracle;
+    jobId = _jobId;
+    fee = _fee;
   }
+
   /**
    * @notice Creates a Chainlink request to retrieve API response, find the target
    * data, then multiply by 1000000000000000000 (to remove decimal places from data).
@@ -84,5 +100,12 @@ contract APIConsumer is ChainlinkClient {
    * @notice Witdraws LINK from the contract
    * @dev Implement a withdraw function to avoid locking your LINK in the contract
    */
-  function withdrawLink() external {}
+  function withdrawLink() external onlyOwner {
+    LinkTokenInterface linkToken = LinkTokenInterface(chainlinkTokenAddress());
+    uint256 balance = linkToken.balanceOf(address(this));
+    if (balance == 0) {
+        revert APIConsumer__NothingToWithdraw();
+    }
+    linkToken.transfer(msg.sender, balance);
+  }
 }

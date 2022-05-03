@@ -2,9 +2,13 @@
   "name": "gloria",
   "version": "1.0.0",
   "description": "Just opened for the sake of sharing the contract code easily, everything can be changed or we can build the project here.  -Ali",
-  "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "compile": "hardhat compile",
+    "test": "hardhat test ./test/unit/APIConsumer.spec.ts --network hardhat",
+    "test-staging": "hardhat test ./test/staging/*.spec.ts --network kovan",
+    "lint": "solhint 'contracts/*.sol'",
+    "lint:fix": "solhint 'contracts/**/*.sol' --fix",
+    "coverage": "hardhat coverage --solcoverjs ./.solcover.js"
   },
   "repository": {
     "type": "git",
@@ -17,14 +21,34 @@
   },
   "homepage": "https://github.com/TempleDelphi/Gloria#readme",
   "dependencies": {
-    "@chainlink/contracts": "^0.4.0"
+    "@appliedblockchain/chainlink-contracts": "0.0.4",
+    "@appliedblockchain/chainlink-plugins-fund-link": "0.0.3",
+    "@chainlink/contracts": "^0.4.0",
+    "@chainlink/test-helpers": "^0.0.7-alpha",
+    "@chainlink/token": "^1.1.0",
+    "dotenv": "^10.0.0"
   },
   "devDependencies": {
-    "@nomiclabs/hardhat-ethers": "^2.0.5",
-    "@nomiclabs/hardhat-waffle": "^2.0.3",
-    "chai": "^4.3.6",
-    "ethereum-waffle": "^3.4.4",
-    "ethers": "^5.6.4",
-    "hardhat": "^2.9.3"
+    "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers@^0.3.0-beta.11",
+    "@nomiclabs/hardhat-etherscan": "^3.0.3",
+    "@nomiclabs/hardhat-waffle": "^2.0.1",
+    "@typechain/ethers-v5": "^8.0.5",
+    "@typechain/hardhat": "^3.0.0",
+    "@types/chai": "^4.2.22",
+    "@types/mocha": "^9.0.0",
+    "@types/node": "^16.11.10",
+    "chai": "^4.3.4",
+    "ethereum-waffle": "^3.4.0",
+    "ethers": "^5.5.1",
+    "hardhat": "^2.7.0",
+    "hardhat-deploy": "^0.9.14",
+    "hardhat-gas-reporter": "^1.0.4",
+    "solhint": "^3.3.7",
+    "ts-node": "^10.4.0",
+    "typechain": "^7.0.0",
+    "typescript": "^4.5.4"
+  },
+  "mocha": {
+    "timeout": 10000000
   }
 }
